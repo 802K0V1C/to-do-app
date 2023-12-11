@@ -11,6 +11,10 @@ app.use(cors())
 
 app.use(express.static(path.join(__dirname, '/client')));
 
+app.use((req, res) => {
+  res.status(404).send({ message: 'Not found...' });
+});
+
 const server = app.listen(process.env.PORT || 8000, () => {
   console.log('Server is running...');
 });
@@ -18,26 +22,22 @@ const server = app.listen(process.env.PORT || 8000, () => {
 const io = socket(server);
 
 io.on('connection', (socket) => {
-  console.log('I\'ve added a listener on message event \n');
+  console.log('we got new socket!' + socket.id);
 
   io.to(socket.id).emit('updateData', tasks);
   console.log(tasks)
 
   socket.on('newTask', (task) => {
-    const newTask = { id: socket.id, name: task.title}
+    const newTask = { id: socket.id, name: task.name}
     tasks.push(newTask)
     console.log('New task added:', newTask);
     io.emit('updateData', tasks);
   })
 
   socket.on('removeTask', (taskId) => {
-    tasks = tasks.filter((task) => task.id !== socket.id || task.id !== taskId);
+    tasks = tasks.filter((task) => task.id !== taskId);
     console.log('Task removed:', taskId);
     io.emit('updateData', tasks);
   });
-
+  
 })
-
-app.use((req, res) => {
-  res.status(404).send({ message: 'Not found...' });
-});
